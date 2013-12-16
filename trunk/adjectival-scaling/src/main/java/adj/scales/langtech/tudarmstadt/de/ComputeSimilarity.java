@@ -13,7 +13,7 @@ import org.apache.commons.io.LineIterator;
  * Hello world!
  *
  */
-public class App
+public class ComputeSimilarity
 {
     public static void main(String[] args)
         throws FileNotFoundException
