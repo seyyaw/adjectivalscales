@@ -20,8 +20,8 @@ public class ComputeSimilarity
     {
         FileReader reader = new FileReader(new File(args[0]));
         LineIterator lineIterator = IOUtils.lineIterator(reader);
-        String adj1 = "slow";
-        String adj2 = "brisk";
+        String adj1 = "best";
+        String adj2 = "better";
         String vector1 = null, vector2 = null, vectorMiddle = "";
         while (lineIterator.hasNext()) {
             String line = lineIterator.nextLine();
@@ -56,6 +56,7 @@ public class ComputeSimilarity
         System.out.println(cosine_similarity(vector2List, vectorsMiddle));
     }
 
+    // http://bytes4u.blogspot.de/2013/03/cosine-similarity-implementation-in-java.html
     private static double cosine_similarity(List<Double> vec1,List<Double> vec2)
     {
         double dp = dot_product(vec1, vec2);
@@ -81,4 +82,6 @@ public class ComputeSimilarity
         }
         return sum;
     }
+
+
 }
