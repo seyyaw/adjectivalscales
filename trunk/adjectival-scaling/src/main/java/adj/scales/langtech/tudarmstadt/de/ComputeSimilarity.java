@@ -4,7 +4,9 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.io.LineIterator;
@@ -20,8 +22,8 @@ public class ComputeSimilarity
     {
         FileReader reader = new FileReader(new File(args[0]));
         LineIterator lineIterator = IOUtils.lineIterator(reader);
-        String adj1 = "best";
-        String adj2 = "better";
+        String adj1 = "greatest";
+        String adj2 = "largest";
         String vector1 = null, vector2 = null, vectorMiddle = "";
         while (lineIterator.hasNext()) {
             String line = lineIterator.nextLine();
@@ -48,16 +50,34 @@ public class ComputeSimilarity
                     + vector2List.get(i - 1));
             vectorMiddle = vectorMiddle + vectorsMiddle.get(i - 1) + " ";
         }
+
+        // stores lower adjectives with the cosine similarity of
+        Map<Double, String> lower = new HashMap<Double, String>();
+
+        // stores uper adjectives with the cosine similarity of
+        Map<Double, String> uper = new HashMap<Double, String>();
+
+        lineIterator = IOUtils.lineIterator(reader);
+        while (lineIterator.hasNext()) {
+            String line = lineIterator.nextLine();
+            String[] words = line.split(" ");
+            List<Double> vector = new ArrayList<Double>();
+            for (int i = 1; i < words.length; i++) {
+                vector.add(Double.parseDouble(vectors1[i]));
+            }
+        }
+
         System.out.println(vector1);
         System.out.println(vector2);
         System.out.println(vectorMiddle);
         System.out.println(cosine_similarity(vector1List, vector2List));
         System.out.println(cosine_similarity(vector1List, vectorsMiddle));
         System.out.println(cosine_similarity(vector2List, vectorsMiddle));
+
     }
 
     // http://bytes4u.blogspot.de/2013/03/cosine-similarity-implementation-in-java.html
-    private static double cosine_similarity(List<Double> vec1,List<Double> vec2)
+    private static double cosine_similarity(List<Double> vec1, List<Double> vec2)
     {
         double dp = dot_product(vec1, vec2);
         double magnitudeA = find_magnitude(vec1);
@@ -74,7 +94,7 @@ public class ComputeSimilarity
         return Math.sqrt(sum_mag);
     }
 
-    private static double dot_product(List<Double> vec1,List<Double> vec2)
+    private static double dot_product(List<Double> vec1, List<Double> vec2)
     {
         double sum = 0;
         for (int i = 0; i < vec1.size(); i++) {
@@ -83,5 +103,17 @@ public class ComputeSimilarity
         return sum;
     }
 
+    private static void addToLower(List<Double> aLowers, Map<Double, String> aWords,
+            Double lower, String aWord)
+    {
 
+        if (aLowers.size() < 3) {
+            aLowers.add(lower);
+            aWords.put(lower, aWord);
+        }
+        else{
+
+        }
+
+    }
 }
