@@ -4,9 +4,9 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.TreeMap;
 
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.io.LineIterator;
@@ -22,8 +22,8 @@ public class ComputeSimilarity
     {
         FileReader reader = new FileReader(new File(args[0]));
         LineIterator lineIterator = IOUtils.lineIterator(reader);
-        String adj1 = "greatest";
-        String adj2 = "largest";
+        String adj1 = "good";
+        String adj2 = "evil";
         String vector1 = null, vector2 = null, vectorMiddle = "";
         while (lineIterator.hasNext()) {
             String line = lineIterator.nextLine();
@@ -51,33 +51,44 @@ public class ComputeSimilarity
             vectorMiddle = vectorMiddle + vectorsMiddle.get(i - 1) + " ";
         }
 
+        System.out.println(vector1);
+        System.out.println(vector2);
+        System.out.println(vectorMiddle);
+        System.out.println(cosineSimilarity(vector1List, vector2List));
+        System.out.println(cosineSimilarity(vector1List, vectorsMiddle));
+        System.out.println(cosineSimilarity(vector2List, vectorsMiddle));
+
         // stores lower adjectives with the cosine similarity of
-        Map<Double, String> lower = new HashMap<Double, String>();
+        Map<Double, String> lower = new TreeMap<Double, String>();
 
         // stores uper adjectives with the cosine similarity of
-        Map<Double, String> uper = new HashMap<Double, String>();
+        Map<Double, String> upper = new TreeMap<Double, String>();
 
+        reader = new FileReader(new File(args[0]));
         lineIterator = IOUtils.lineIterator(reader);
+        lineIterator.nextLine();
         while (lineIterator.hasNext()) {
             String line = lineIterator.nextLine();
             String[] words = line.split(" ");
             List<Double> vector = new ArrayList<Double>();
             for (int i = 1; i < words.length; i++) {
-                vector.add(Double.parseDouble(vectors1[i]));
+                vector.add(Double.parseDouble(words[i]));
+            }
+            Double middle = cosineSimilarity(vector1List, vector2List);
+            Double similarity = cosineSimilarity(vectorsMiddle, vector);
+            if (middle < similarity) {
+                addToUpper(upper, similarity, words[0]);
+            }
+            else {
+                addToLower(lower, similarity, words[0]);
             }
         }
-
-        System.out.println(vector1);
-        System.out.println(vector2);
-        System.out.println(vectorMiddle);
-        System.out.println(cosine_similarity(vector1List, vector2List));
-        System.out.println(cosine_similarity(vector1List, vectorsMiddle));
-        System.out.println(cosine_similarity(vector2List, vectorsMiddle));
-
+        System.out.println(lower);
+        System.out.println(upper);
     }
 
     // http://bytes4u.blogspot.de/2013/03/cosine-similarity-implementation-in-java.html
-    private static double cosine_similarity(List<Double> vec1, List<Double> vec2)
+    private static double cosineSimilarity(List<Double> vec1, List<Double> vec2)
     {
         double dp = dot_product(vec1, vec2);
         double magnitudeA = find_magnitude(vec1);
@@ -103,16 +114,29 @@ public class ComputeSimilarity
         return sum;
     }
 
-    private static void addToLower(List<Double> aLowers, Map<Double, String> aWords,
-            Double lower, String aWord)
+    private static void addToLower(Map<Double, String> aWords, Double aValue, String aWord)
+    {
+        List<Double> aLists = new ArrayList<Double>(aWords.keySet());
+        if (aLists.size() < 2) {
+            aWords.put(aValue, aWord);
+        }
+        else if (aLists.get(0) < aValue) {
+            aWords.remove(aLists.get(0));
+            aWords.put(aValue, aWord);
+        }
+
+    }
+
+    private static void addToUpper(Map<Double, String> aWords, Double aValue, String aWord)
     {
 
-        if (aLowers.size() < 3) {
-            aLowers.add(lower);
-            aWords.put(lower, aWord);
+        List<Double> aLists = new ArrayList<Double>(aWords.keySet());
+        if (aLists.size() < 2) {
+            aWords.put(aValue, aWord);
         }
-        else{
-
+        else if (aLists.get(aLists.size() - 1) > aValue) {
+            aWords.remove(aLists.get(aLists.size() - 1));
+            aWords.put(aValue, aWord);
         }
 
     }
