@@ -22,16 +22,16 @@ public class ComputeSimilarity
     {
         FileReader reader = new FileReader(new File(args[0]));
         LineIterator lineIterator = IOUtils.lineIterator(reader);
-        String adj1 = "good";
-        String adj2 = "evil";
+        String adj1 = "FASTEST";
+        String adj2 = "FAST";
         String vector1 = null, vector2 = null, vectorMiddle = "";
         while (lineIterator.hasNext()) {
             String line = lineIterator.nextLine();
             String[] words = line.split(" ");
-            if (words[0].toLowerCase().equals(adj1)) {
+            if (words[0].equals(adj1)) {
                 vector1 = line;
             }
-            if (words[0].toLowerCase().equals(adj2)) {
+            if (words[0].equals(adj2)) {
                 vector2 = line;
             }
             if (vector1 != null && vector2 != null) {
@@ -67,6 +67,10 @@ public class ComputeSimilarity
         reader = new FileReader(new File(args[0]));
         lineIterator = IOUtils.lineIterator(reader);
         lineIterator.nextLine();
+
+        double max = 0.0;
+        String word = "";
+
         while (lineIterator.hasNext()) {
             String line = lineIterator.nextLine();
             String[] words = line.split(" ");
@@ -82,7 +86,15 @@ public class ComputeSimilarity
             else {
                 addToLower(lower, similarity, words[0]);
             }
+
+            Double average = cosineSimilarity(vectorsMiddle, vector);
+            if (max < average && !(words[0].equals(adj1) || words[0].equals(adj2))) {
+               max = average;
+               word = words[0];
+            }
         }
+        System.out.println(word);
+        System.out.println(max);
         System.out.println(lower);
         System.out.println(upper);
     }
