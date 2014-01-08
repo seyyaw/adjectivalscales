@@ -4,9 +4,9 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.TreeMap;
 
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.io.LineIterator;
@@ -17,60 +17,114 @@ import org.apache.commons.io.LineIterator;
  */
 public class ComputeSimilarity
 {
+    static String adj1 = "FURIOUS";
+    static String adj2 = "CALM";
+    static String halfAdj = "";
+    static String firstHalfAdj = "";
+    static String secondHalfAdj = "";
+
     public static void main(String[] args)
         throws FileNotFoundException
     {
         FileReader reader = new FileReader(new File(args[0]));
         LineIterator lineIterator = IOUtils.lineIterator(reader);
-        String adj1 = "FASTEST";
-        String adj2 = "FAST";
-        String vector1 = null, vector2 = null, vectorMiddle = "";
-        while (lineIterator.hasNext()) {
-            String line = lineIterator.nextLine();
-            String[] words = line.split(" ");
-            if (words[0].equals(adj1)) {
-                vector1 = line;
-            }
-            if (words[0].equals(adj2)) {
-                vector2 = line;
-            }
-            if (vector1 != null && vector2 != null) {
-                break;
-            }
-        }
+
         List<Double> vector1List = new ArrayList<Double>();
         List<Double> vector2List = new ArrayList<Double>();
         List<Double> vectorsMiddle = new ArrayList<Double>();
-        String[] vectors1 = vector1.split(" ");
-        String[] vectors2 = vector2.split(" ");
+
+        List<Double> vectorFirstHalf = new ArrayList<Double>();
+        List<Double> vectorsSecondHalf = new ArrayList<Double>();
+
+        List<String> vectors = getVectors(lineIterator, adj1, adj2);
+
+        String[] vectors1 = vectors.get(0).split(" ");
+        String[] vectors2 = vectors.get(1).split(" ");
+
         for (int i = 1; i < vectors1.length; i++) {
             vector1List.add(Double.parseDouble(vectors1[i]));
             vector2List.add(Double.parseDouble(vectors2[i]));
-            vectorsMiddle.add((vector1List.get(i - 1) - vector2List.get(i - 1)) / 2.0
-                    + vector2List.get(i - 1));
-            vectorMiddle = vectorMiddle + vectorsMiddle.get(i - 1) + " ";
         }
 
-        System.out.println(vector1);
-        System.out.println(vector2);
-        System.out.println(vectorMiddle);
-        System.out.println(cosineSimilarity(vector1List, vector2List));
-        System.out.println(cosineSimilarity(vector1List, vectorsMiddle));
-        System.out.println(cosineSimilarity(vector2List, vectorsMiddle));
+        setAverageVector(vector1List, vector2List, vectorsMiddle);
 
-        // stores lower adjectives with the cosine similarity of
-        Map<Double, String> lower = new TreeMap<Double, String>();
-
-        // stores uper adjectives with the cosine similarity of
-        Map<Double, String> upper = new TreeMap<Double, String>();
+        System.out.println("SIM : " + cosineSimilarity(vector1List, vector2List));
 
         reader = new FileReader(new File(args[0]));
         lineIterator = IOUtils.lineIterator(reader);
         lineIterator.nextLine();
 
-        double max = 0.0;
-        String word = "";
+        Map<String, List<Double>> middleVector = getMiddleVector(lineIterator, adj1, adj2,
+                vectorsMiddle);
+        // =============================HALF============================//
+        for (String middleWord : middleVector.keySet()) {
+            System.out.println("MIDDLE : " + middleWord);
+            halfAdj = middleWord;
+        }
 
+        setAverageVector(vector1List, middleVector.get(halfAdj), vectorFirstHalf);
+        setAverageVector(middleVector.get(halfAdj), vector2List, vectorsSecondHalf);
+
+        reader = new FileReader(new File(args[0]));
+        lineIterator = IOUtils.lineIterator(reader);
+        lineIterator.nextLine();
+
+        Map<String, List<Double>> firstHalfMiddleVector = getMiddleVector(lineIterator, adj1,
+                halfAdj, vectorFirstHalf);
+
+        for (String middleWord : firstHalfMiddleVector.keySet()) {
+            System.out.println("1st Half : " + middleWord);
+            firstHalfAdj = middleWord;
+        }
+
+        reader = new FileReader(new File(args[0]));
+        lineIterator = IOUtils.lineIterator(reader);
+        lineIterator.nextLine();
+
+        Map<String, List<Double>> secondHalfMiddleVector = getMiddleVector(lineIterator, halfAdj,
+                adj2, vectorsSecondHalf);
+        for (String middleWord : secondHalfMiddleVector.keySet()) {
+            System.out.println("2nd Half : " + middleWord);
+            secondHalfAdj = middleWord;
+        }
+
+    }
+
+    private static void setAverageVector(List<Double> vector1List, List<Double> vector2List,
+            List<Double> vectorsMiddle)
+    {
+        for (int i = 1; i < vector1List.size(); i++) {
+
+            vectorsMiddle.add((vector1List.get(i - 1) - vector2List.get(i - 1)) / 2.0
+                    + vector2List.get(i - 1));
+        }
+
+    }
+
+    private static List<String> getVectors(LineIterator lineIterator, String word1, String word2)
+    {
+        List<String> vectors = new ArrayList<String>();
+        while (lineIterator.hasNext()) {
+            String line = lineIterator.nextLine();
+            String[] words = line.split(" ");
+            if (words[0].equals(word1)) {
+                vectors.add(line);
+            }
+            if (words[0].equals(word2)) {
+                vectors.add(line);
+            }
+            if (vectors.size() == 2) {
+                break;
+            }
+        }
+        return vectors;
+    }
+
+    private static Map<String, List<Double>> getMiddleVector(LineIterator lineIterator,
+            String word1, String word2, List<Double> vectorsMiddle)
+    {
+        Map<String, List<Double>> middleVector = new HashMap<String, List<Double>>();
+        double max = 0.0;
         while (lineIterator.hasNext()) {
             String line = lineIterator.nextLine();
             String[] words = line.split(" ");
@@ -78,25 +132,17 @@ public class ComputeSimilarity
             for (int i = 1; i < words.length; i++) {
                 vector.add(Double.parseDouble(words[i]));
             }
-            Double middle = cosineSimilarity(vector1List, vector2List);
-            Double similarity = cosineSimilarity(vectorsMiddle, vector);
-            if (middle < similarity) {
-                addToUpper(upper, similarity, words[0]);
-            }
-            else {
-                addToLower(lower, similarity, words[0]);
-            }
-
             Double average = cosineSimilarity(vectorsMiddle, vector);
-            if (max < average && !(words[0].equals(adj1) || words[0].equals(adj2))) {
-               max = average;
-               word = words[0];
+            if (max < average
+                    && !(words[0].equals(adj1)
+                            || words[0].equals(adj2) || words[0].equals(firstHalfAdj) || words[0]
+                                .equals(halfAdj))) {
+                max = average;
+                middleVector.clear();
+                middleVector.put(words[0], vector);
             }
         }
-        System.out.println(word);
-        System.out.println(max);
-        System.out.println(lower);
-        System.out.println(upper);
+        return middleVector;
     }
 
     // http://bytes4u.blogspot.de/2013/03/cosine-similarity-implementation-in-java.html
@@ -126,30 +172,4 @@ public class ComputeSimilarity
         return sum;
     }
 
-    private static void addToLower(Map<Double, String> aWords, Double aValue, String aWord)
-    {
-        List<Double> aLists = new ArrayList<Double>(aWords.keySet());
-        if (aLists.size() < 2) {
-            aWords.put(aValue, aWord);
-        }
-        else if (aLists.get(0) < aValue) {
-            aWords.remove(aLists.get(0));
-            aWords.put(aValue, aWord);
-        }
-
-    }
-
-    private static void addToUpper(Map<Double, String> aWords, Double aValue, String aWord)
-    {
-
-        List<Double> aLists = new ArrayList<Double>(aWords.keySet());
-        if (aLists.size() < 2) {
-            aWords.put(aValue, aWord);
-        }
-        else if (aLists.get(aLists.size() - 1) > aValue) {
-            aWords.remove(aLists.get(aLists.size() - 1));
-            aWords.put(aValue, aWord);
-        }
-
-    }
 }
